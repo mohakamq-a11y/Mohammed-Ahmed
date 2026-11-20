@@ -1,0 +1,347 @@
+{
+  "entities": {
+    "Customer": {
+      "title": "Customer",
+      "description": "National AC CRM client account across residential, commercial, industrial, and hospitality segments.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Company or client name."
+        },
+        "contactPerson": {
+          "type": "string",
+          "description": "Primary point of contact."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "Optional contact email address."
+        },
+        "city": {
+          "type": "string",
+          "description": "City or national service region."
+        },
+        "address": {
+          "type": "string",
+          "description": "Optional street address or site location."
+        },
+        "segment": {
+          "type": "string",
+          "enum": ["RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL", "HOSPITALITY"],
+          "description": "Customer market segment."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional account notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "companyName",
+        "contactPerson",
+        "phone",
+        "city",
+        "segment",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AcDeal": {
+      "title": "AcDeal",
+      "description": "AC product sales quote and pipeline deal.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Referenced customer document ID."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Denormalized customer display name."
+        },
+        "productName": {
+          "type": "string",
+          "description": "AC model or equipment package name."
+        },
+        "productCategory": {
+          "type": "string",
+          "enum": ["SPLIT_AC", "CASSETTE_AC", "DUCTED_SPLIT", "VRF_SYSTEM", "CHILLER"],
+          "description": "AC equipment category."
+        },
+        "tonnage": {
+          "type": "number",
+          "description": "Cooling capacity in tons."
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Number of AC units quoted."
+        },
+        "unitPrice": {
+          "type": "number",
+          "description": "Price per unit in USD."
+        },
+        "totalValue": {
+          "type": "number",
+          "description": "Total deal quote amount in USD."
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["LEAD", "SITE_SURVEY", "QUOTED", "NEGOTIATION", "WON", "LOST"],
+          "description": "Sales pipeline stage."
+        },
+        "installationIncluded": {
+          "type": "boolean",
+          "description": "Whether standard installation is bundled in quote."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional quote remarks."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "customerId",
+        "customerName",
+        "productName",
+        "productCategory",
+        "tonnage",
+        "quantity",
+        "unitPrice",
+        "totalValue",
+        "stage",
+        "installationIncluded",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ServiceJob": {
+      "title": "ServiceJob",
+      "description": "HVAC service dispatch order for maintenance, installation, ductwork, or repair.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Referenced customer document ID."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Denormalized customer display name."
+        },
+        "serviceType": {
+          "type": "string",
+          "enum": ["INSTALLATION", "MAINTENANCE", "DUCT_WORK", "REPAIR"],
+          "description": "Type of HVAC field service."
+        },
+        "title": {
+          "type": "string",
+          "description": "Service job summary title."
+        },
+        "technicianName": {
+          "type": "string",
+          "description": "Assigned lead HVAC technician."
+        },
+        "scheduledDate": {
+          "type": "string",
+          "description": "Scheduled date and time slot."
+        },
+        "city": {
+          "type": "string",
+          "description": "Service site city."
+        },
+        "ductSpecs": {
+          "type": "string",
+          "description": "Optional ductwork gauge, airflow CFM, or unit tonnage specification."
+        },
+        "estimatedCost": {
+          "type": "number",
+          "description": "Estimated service revenue in USD."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["STANDARD", "URGENT", "CRITICAL"],
+          "description": "Dispatch priority."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+          "description": "Current job execution status."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional technician or site notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "customerId",
+        "customerName",
+        "serviceType",
+        "title",
+        "technicianName",
+        "scheduledDate",
+        "city",
+        "estimatedCost",
+        "priority",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AmcContract": {
+      "title": "AmcContract",
+      "description": "Annual Maintenance Contract (AMC) for recurring HVAC preventive servicing.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Referenced customer document ID."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Denormalized customer display name."
+        },
+        "contractNumber": {
+          "type": "string",
+          "description": "Unique AMC contract reference code."
+        },
+        "planTier": {
+          "type": "string",
+          "enum": ["COMPREHENSIVE", "NON_COMPREHENSIVE", "PREVENTIVE_ONLY"],
+          "description": "AMC coverage tier."
+        },
+        "unitsCovered": {
+          "type": "integer",
+          "description": "Total AC units covered under contract."
+        },
+        "totalTonnage": {
+          "type": "number",
+          "description": "Combined cooling capacity in tons."
+        },
+        "visitsPerYear": {
+          "type": "integer",
+          "description": "Scheduled PM visits per year."
+        },
+        "visitsCompleted": {
+          "type": "integer",
+          "description": "PM visits completed so far."
+        },
+        "annualFee": {
+          "type": "number",
+          "description": "Annual contract value in USD."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Contract start date."
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Contract expiration date."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "EXPIRING_SOON", "EXPIRED", "RENEWED"],
+          "description": "AMC lifecycle status."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional SLA or equipment notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "customerId",
+        "customerName",
+        "contractNumber",
+        "planTier",
+        "unitsCovered",
+        "totalTonnage",
+        "visitsPerYear",
+        "visitsCompleted",
+        "annualFee",
+        "startDate",
+        "endDate",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "User-scoped CRM customer accounts."
+    },
+    "/users/{userId}/deals/{dealId}": {
+      "schema": { "$ref": "#/entities/AcDeal" },
+      "description": "User-scoped AC equipment sales pipeline deals."
+    },
+    "/users/{userId}/service_jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/ServiceJob" },
+      "description": "User-scoped HVAC installation, maintenance, and ductwork service jobs."
+    },
+    "/users/{userId}/amc_contracts/{contractId}": {
+      "schema": { "$ref": "#/entities/AmcContract" },
+      "description": "User-scoped Annual Maintenance Contracts (AMC)."
+    }
+  }
+}

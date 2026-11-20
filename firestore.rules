@@ -1,0 +1,201 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL HARDENED HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) || data[field] == null || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    // --- VALIDATION BLUEPRINTS ---
+    function isValidCustomer(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 120 &&
+             data.contactPerson is string && data.contactPerson.size() >= 1 && data.contactPerson.size() <= 100 &&
+             data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 30 &&
+             data.city is string && data.city.size() >= 1 && data.city.size() <= 80 &&
+             data.segment in ['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'HOSPITALITY'] &&
+             isOptionalString(data, 'email', 120) &&
+             isOptionalString(data, 'address', 250) &&
+             isOptionalString(data, 'notes', 500) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAcDeal(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             isValidId(data.customerId) &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120 &&
+             data.productName is string && data.productName.size() >= 1 && data.productName.size() <= 120 &&
+             data.productCategory in ['SPLIT_AC', 'CASSETTE_AC', 'DUCTED_SPLIT', 'VRF_SYSTEM', 'CHILLER'] &&
+             (data.tonnage is int || data.tonnage is float) && data.tonnage >= 0.5 && data.tonnage <= 500.0 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 1000 &&
+             (data.unitPrice is int || data.unitPrice is float) && data.unitPrice >= 0.0 && data.unitPrice <= 10000000.0 &&
+             (data.totalValue is int || data.totalValue is float) && data.totalValue >= 0.0 && data.totalValue <= 100000000.0 &&
+             data.stage in ['LEAD', 'SITE_SURVEY', 'QUOTED', 'NEGOTIATION', 'WON', 'LOST'] &&
+             data.installationIncluded is bool &&
+             isOptionalString(data, 'notes', 500) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidServiceJob(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             isValidId(data.customerId) &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120 &&
+             data.serviceType in ['INSTALLATION', 'MAINTENANCE', 'DUCT_WORK', 'REPAIR'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 140 &&
+             data.technicianName is string && data.technicianName.size() >= 1 && data.technicianName.size() <= 100 &&
+             data.scheduledDate is string && data.scheduledDate.size() >= 1 && data.scheduledDate.size() <= 40 &&
+             data.city is string && data.city.size() >= 1 && data.city.size() <= 80 &&
+             isOptionalString(data, 'ductSpecs', 200) &&
+             (data.estimatedCost is int || data.estimatedCost is float) && data.estimatedCost >= 0.0 && data.estimatedCost <= 10000000.0 &&
+             data.priority in ['STANDARD', 'URGENT', 'CRITICAL'] &&
+             data.status in ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] &&
+             isOptionalString(data, 'notes', 500) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAmcContract(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             isValidId(data.customerId) &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120 &&
+             data.contractNumber is string && data.contractNumber.size() >= 1 && data.contractNumber.size() <= 60 &&
+             data.planTier in ['COMPREHENSIVE', 'NON_COMPREHENSIVE', 'PREVENTIVE_ONLY'] &&
+             data.unitsCovered is int && data.unitsCovered >= 1 && data.unitsCovered <= 5000 &&
+             (data.totalTonnage is int || data.totalTonnage is float) && data.totalTonnage >= 0.5 && data.totalTonnage <= 5000.0 &&
+             data.visitsPerYear is int && data.visitsPerYear >= 1 && data.visitsPerYear <= 24 &&
+             data.visitsCompleted is int && data.visitsCompleted >= 0 && data.visitsCompleted <= data.visitsPerYear &&
+             (data.annualFee is int || data.annualFee is float) && data.annualFee >= 0.0 && data.annualFee <= 10000000.0 &&
+             data.startDate is string && data.startDate.size() >= 1 && data.startDate.size() <= 40 &&
+             data.endDate is string && data.endDate.size() >= 1 && data.endDate.size() <= 40 &&
+             data.status in ['ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'RENEWED'] &&
+             isOptionalString(data, 'notes', 500) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // --- USER-SCOPED CRM COLLECTIONS ---
+    match /users/{userId} {
+      allow read, write: if false;
+
+      match /customers/{customerId} {
+        allow get: if isOwner(userId) && isValidId(customerId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(customerId) &&
+                         incoming().keys().hasAll(['userId', 'companyName', 'contactPerson', 'phone', 'city', 'segment', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'companyName', 'contactPerson', 'phone', 'email', 'city', 'address', 'segment', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidCustomer(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(customerId) &&
+                         isValidCustomer(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['companyName', 'contactPerson', 'phone', 'email', 'city', 'address', 'segment', 'notes', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(customerId);
+      }
+
+      match /deals/{dealId} {
+        allow get: if isOwner(userId) && isValidId(dealId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(dealId) &&
+                         incoming().keys().hasAll(['userId', 'customerId', 'customerName', 'productName', 'productCategory', 'tonnage', 'quantity', 'unitPrice', 'totalValue', 'stage', 'installationIncluded', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'customerId', 'customerName', 'productName', 'productCategory', 'tonnage', 'quantity', 'unitPrice', 'totalValue', 'stage', 'installationIncluded', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidAcDeal(incoming(), userId) &&
+                         exists(/databases/$(database)/documents/users/$(userId)/customers/$(incoming().customerId));
+        allow update: if isOwner(userId) &&
+                         isValidId(dealId) &&
+                         isValidAcDeal(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().customerId == existing().customerId &&
+                         incoming().createdAt == existing().createdAt &&
+                         !(existing().stage in ['WON', 'LOST']) &&
+                         (
+                           // Action: Advance or close deal stage
+                           (incoming().diff(existing()).affectedKeys().hasOnly(['stage', 'updatedAt'])) ||
+                           // Action: Edit quote line details
+                           (incoming().diff(existing()).affectedKeys().hasOnly(['customerName', 'productName', 'productCategory', 'tonnage', 'quantity', 'unitPrice', 'totalValue', 'stage', 'installationIncluded', 'notes', 'updatedAt']))
+                         );
+        allow delete: if isOwner(userId) && isValidId(dealId);
+      }
+
+      match /service_jobs/{jobId} {
+        allow get: if isOwner(userId) && isValidId(jobId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(jobId) &&
+                         incoming().keys().hasAll(['userId', 'customerId', 'customerName', 'serviceType', 'title', 'technicianName', 'scheduledDate', 'city', 'estimatedCost', 'priority', 'status', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'customerId', 'customerName', 'serviceType', 'title', 'technicianName', 'scheduledDate', 'city', 'ductSpecs', 'estimatedCost', 'priority', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidServiceJob(incoming(), userId) &&
+                         exists(/databases/$(database)/documents/users/$(userId)/customers/$(incoming().customerId));
+        allow update: if isOwner(userId) &&
+                         isValidId(jobId) &&
+                         isValidServiceJob(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().customerId == existing().customerId &&
+                         incoming().createdAt == existing().createdAt &&
+                         !(existing().status in ['COMPLETED', 'CANCELLED']) &&
+                         (
+                           // Action: Update dispatch status
+                           (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+                           // Action: Reschedule or update job specification
+                           (incoming().diff(existing()).affectedKeys().hasOnly(['serviceType', 'title', 'technicianName', 'scheduledDate', 'city', 'ductSpecs', 'estimatedCost', 'priority', 'status', 'notes', 'updatedAt']))
+                         );
+        allow delete: if isOwner(userId) && isValidId(jobId);
+      }
+
+      match /amc_contracts/{contractId} {
+        allow get: if isOwner(userId) && isValidId(contractId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(contractId) &&
+                         incoming().keys().hasAll(['userId', 'customerId', 'customerName', 'contractNumber', 'planTier', 'unitsCovered', 'totalTonnage', 'visitsPerYear', 'visitsCompleted', 'annualFee', 'startDate', 'endDate', 'status', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'customerId', 'customerName', 'contractNumber', 'planTier', 'unitsCovered', 'totalTonnage', 'visitsPerYear', 'visitsCompleted', 'annualFee', 'startDate', 'endDate', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidAmcContract(incoming(), userId) &&
+                         exists(/databases/$(database)/documents/users/$(userId)/customers/$(incoming().customerId));
+        allow update: if isOwner(userId) &&
+                         isValidId(contractId) &&
+                         isValidAmcContract(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().customerId == existing().customerId &&
+                         incoming().contractNumber == existing().contractNumber &&
+                         incoming().createdAt == existing().createdAt &&
+                         !(existing().status in ['EXPIRED', 'RENEWED']) &&
+                         (
+                           // Action: Log preventive maintenance visit
+                           (incoming().diff(existing()).affectedKeys().hasOnly(['visitsCompleted', 'updatedAt'])) ||
+                           // Action: Update contract status or details
+                           (incoming().diff(existing()).affectedKeys().hasOnly(['planTier', 'unitsCovered', 'totalTonnage', 'visitsPerYear', 'visitsCompleted', 'annualFee', 'startDate', 'endDate', 'status', 'notes', 'updatedAt']))
+                         );
+        allow delete: if isOwner(userId) && isValidId(contractId);
+      }
+    }
+  }
+}

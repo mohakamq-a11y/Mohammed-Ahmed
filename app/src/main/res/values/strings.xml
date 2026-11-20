@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">National AC</string>
+    <string name="auth_subtitle">HVAC Sales, Field Dispatch &amp; AMC CRM</string>
+    <string name="auth_hero_headline">Climate Control CRM</string>
+    <string name="auth_hero_subhead">AC Equipment • Installation • Maintenance • Duct Work • AMC</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
 </resources>
