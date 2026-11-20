@@ -1,0 +1,6 @@
+{
+  "name": "National AC",
+  "description": "National AC CRM for HVAC product sales, installation, maintenance, ductwork, and AMC contracts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
